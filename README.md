@@ -3,6 +3,8 @@ A real-time handwritten digits recognition by PyTorch &amp; PyQt.
 
 使用PyTorch和PyQt实现手写数字的实时识别。
 
+(Here will be placed a gif of this project.)
+
 # Environment Requirement
 This is my environment:
 * Windows 10
