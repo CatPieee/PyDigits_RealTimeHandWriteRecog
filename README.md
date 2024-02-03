@@ -13,11 +13,11 @@ This is my environment:
 * PyQt xx.xx
 
 # Installation
-git clone https://github.com/CatPieee/PyDigits_RealTimeHandWriteRecog.git
+`git clone https://github.com/CatPieee/PyDigits_RealTimeHandWriteRecog.git`
 
-cd PyDigits_RealTimeHandWriteRecog
+`cd PyDigits_RealTimeHandWriteRecog`
 
-python main.py
+`python main.py`
 
 # Reference
 1. [PyTorch Quick Start (Train and test a simple neural network with MNIST dataset)](https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html)
