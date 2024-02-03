@@ -5,11 +5,16 @@ A real-time handwritten digits recognition by PyTorch &amp; PyQt.
 
 (Here will be placed a gif of this project.)
 
+# Abstract
+* Handwrite input and real-time indetification are reliazed.
+* GUI is designed by Qt Designer.
+* Construct a neural network. Specifically, it's a model with three convolution layers and fully connected layers, which built by PyTorch deep learning framework.
+
 # Environment Requirement
 This is my environment:
 * Windows 10
 * Python 3.10
-* PyTorch 2.1.0
+* PyTorch 2.1.0, Torchvision xx.xx
 * PyQt xx.xx
 
 # Installation
