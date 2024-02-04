@@ -1,6 +1,6 @@
 # requirements.txt
 
 PyTorch==x.x
-PyQt==x.x
+PySide6==x.x
 numpy==x.x
 matplotlib==x.x

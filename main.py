@@ -174,11 +174,11 @@ class MainWindow(QMainWindow):
         self.painter_widget.pen.setColor(self.color)
         self.color_action.setText(QColor(self.color).name())
 
-class MyMainWindow(QMainWindow):
+class MyMainWindow(MainWindow):
     """New customized main window class"""
 
     def __init__(self, parent=None):
-        QMainWindow.__init__(self, parent)
+        super().__init__(parent)
 
         # Create and set up PainterWidget
         self.painter_widget = PainterWidget()
@@ -211,7 +211,7 @@ class MyMainWindow(QMainWindow):
         self.label.setText("Hello World")
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QApplication(sys.argv)                # sys.argv是一个命令行参数列表，第一个参数是程序本身，随后是传递给程序的参数
     w = MyMainWindow()
     w.show()
     sys.exit(app.exec())
