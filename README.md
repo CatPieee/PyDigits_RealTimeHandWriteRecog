@@ -29,3 +29,4 @@ This is my environment:
 # Reference
 1. [PyTorch Quick Start (Train and test a simple neural network with MNIST dataset)](https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html)
 2. [Python-PyQt5 简易画板实现（QPainter）](https://blog.csdn.net/CaraJ/article/details/108118564)
+3. [Qt for Python - Painter Example](https://doc.qt.io/qtforpython-6/examples/example_widgets_painting_painter.html)
