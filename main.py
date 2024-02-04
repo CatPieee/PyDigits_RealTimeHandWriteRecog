@@ -1,135 +1,217 @@
+# Copyright (C) 2022 The Qt Company Ltd.
+# SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+
+from PySide6.QtWidgets import QWidget, QMainWindow, QApplication, QFileDialog, QStyle, QColorDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+from PySide6.QtCore import Qt, Slot, QStandardPaths
+from PySide6.QtGui import QMouseEvent, QPaintEvent, QPen, QAction, QPainter, QColor, QPixmap, QIcon, QKeySequence
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QPlainTextEdit, QFileDialog, QMessageBox, QLabel, QVBoxLayout
-from PyQt5.QtGui import QPixmap, QPainter, QPen
-from PyQt5.QtCore import Qt
-from ui.Ui_mainwindow import Ui_MainWindow
-from PIL import Image
-import torch
-from torchvision.transforms import ToTensor
-from net import MyNet
 
-class MyMainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
+class PainterWidget(QWidget):
+    """A widget where user can draw with their mouse
 
-        # 为按钮添加槽函数
-        self.pushButton.clicked.connect(self.readImage)
-        self.pushButton_2.clicked.connect(self.recognize)
-        self.pushButton_3.clicked.connect(self.writeNumber)
-        self.pushButton_4.clicked.connect(self.recognize_handwrite)
+    The user draws on a QPixmap which is itself paint from paintEvent()
 
-        # 深度学习推理准备
-        self.image = None
-        self.network = MyNet()
-        self.network.load_state_dict(torch.load('model\\model.pth'))
-        self.network.eval()
+    """
 
-    # 弹出文件对话框，选择图片
-    def readImage(self):
-        print('准备读取图片')
-        file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.AnyFile)
-        file_dialog.setNameFilter("Images (*.png *.xpm *.jpg *.bmp)")
-        if file_dialog.exec():
-            file_name = file_dialog.selectedFiles()[0]
-            pixmap = QPixmap(file_name)
-            self.label = QLabel(self)
-            self.label.setGeometry(10, 10, 361, 361)
-            self.label.setPixmap(pixmap.scaled(self.label.size()))
-            self.label.setScaledContents(True)
-            self.image = pixmap.toImage()
-        # 在垂直布局中显示label
-        # self.label.show()
-        # 将label铺满整个垂直布局
-        self.verticalLayout.addWidget(self.label)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-    # 识别图片，显示在label_2中
-    def recognize(self):
-        if self.image == None:
-            QMessageBox.information(self, '提示', '没有加载图片')
-            return
-        self.image = self.qimage2tensor(self.image)
-        pred = self.predict(self.image)
-        self.label_2.setText('预测结果：' + str(pred.item()))
+        self.setFixedSize(680, 480)
+        self.pixmap = QPixmap(self.size())
+        self.pixmap.fill(Qt.white)
 
-    # 将QImage转换为Tensor
-    def qimage2tensor(self, qimage):
-        pImg = Image.fromqpixmap(qimage)
-        pImg = pImg.convert('L')        # 转换为灰度图
-        pImg = pImg.resize((28, 28))    # 调整大小为28*28
-        tensor = ToTensor()(pImg)
-        tensor = tensor.unsqueeze(0)
-        return tensor
+        self.previous_pos = None
+        self.painter = QPainter()
+        self.pen = QPen()
+        self.pen.setWidth(10)
+        self.pen.setCapStyle(Qt.RoundCap)
+        self.pen.setJoinStyle(Qt.RoundJoin)
+
+    def paintEvent(self, event: QPaintEvent):
+        """Override method from QWidget
+
+        Paint the Pixmap into the widget
+
+        """
+        with QPainter(self) as painter:
+            painter.drawPixmap(0, 0, self.pixmap)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        """Override from QWidget
+
+        Called when user clicks on the mouse
+
+        """
+        self.previous_pos = event.position().toPoint()
+        QWidget.mousePressEvent(self, event)
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        """Override method from QWidget
+
+        Called when user moves and clicks on the mouse
+
+        """
+        current_pos = event.position().toPoint()
+        self.painter.begin(self.pixmap)
+        self.painter.setRenderHints(QPainter.Antialiasing, True)
+        self.painter.setPen(self.pen)
+        self.painter.drawLine(self.previous_pos, current_pos)
+        self.painter.end()
+
+        self.previous_pos = current_pos
+        self.update()
+
+        QWidget.mouseMoveEvent(self, event)
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        """Override method from QWidget
+
+        Called when user releases the mouse
+
+        """
+        self.previous_pos = None
+        QWidget.mouseReleaseEvent(self, event)
+
+    def save(self, filename: str):
+        """ save pixmap to filename """
+        self.pixmap.save(filename)
+
+    def load(self, filename: str):
+        """ load pixmap from filename """
+        self.pixmap.load(filename)
+        self.pixmap = self.pixmap.scaled(self.size(), Qt.KeepAspectRatio)
+        self.update()
+
+    def clear(self):
+        """ Clear the pixmap """
+        self.pixmap.fill(Qt.white)
+        self.update()
+
+
+class MainWindow(QMainWindow):
+    """An Application example to draw using a pen """
+
+    def __init__(self, parent=None):
+        QMainWindow.__init__(self, parent)
+
+        self.painter_widget = PainterWidget()
+        self.bar = self.addToolBar("Menu")
+        self.bar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self._save_action = self.bar.addAction(
+            QApplication.style().standardIcon(QStyle.SP_DialogSaveButton), "Save", self.on_save
+        )
+        self._save_action.setShortcut(QKeySequence.Save)
+        self._open_action = self.bar.addAction(
+            qApp.style().standardIcon(QStyle.SP_DialogOpenButton), "Open", self.on_open
+        )
+        self._open_action.setShortcut(QKeySequence.Open)
+        self.bar.addAction(
+            qApp.style().standardIcon(QStyle.SP_DialogResetButton),
+            "Clear",
+            self.painter_widget.clear,
+        )
+        self.bar.addSeparator()
+
+        self.color_action = QAction(self)
+        self.color_action.triggered.connect(self.on_color_clicked)
+        self.bar.addAction(self.color_action)
+
+        self.setCentralWidget(self.painter_widget)
+
+        self.color = Qt.black
+        self.set_color(self.color)
+
+        self.mime_type_filters = ["image/png", "image/jpeg"]
+
+    @Slot()
+    def on_save(self):
+
+        dialog = QFileDialog(self, "Save File")
+        dialog.setMimeTypeFilters(self.mime_type_filters)
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        dialog.setDefaultSuffix("png")
+        dialog.setDirectory(
+            QStandardPaths.writableLocation(QStandardPaths.PicturesLocation)
+        )
+
+        if dialog.exec() == QFileDialog.Accepted:
+            if dialog.selectedFiles():
+                self.painter_widget.save(dialog.selectedFiles()[0])
+
+    @Slot()
+    def on_open(self):
+
+        dialog = QFileDialog(self, "Save File")
+        dialog.setMimeTypeFilters(self.mime_type_filters)
+        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setAcceptMode(QFileDialog.AcceptOpen)
+        dialog.setDefaultSuffix("png")
+        dialog.setDirectory(
+            QStandardPaths.writableLocation(QStandardPaths.PicturesLocation)
+        )
+
+        if dialog.exec() == QFileDialog.Accepted:
+            if dialog.selectedFiles():
+                self.painter_widget.load(dialog.selectedFiles()[0])
+
+    @Slot()
+    def on_color_clicked(self):
+
+        color = QColorDialog.getColor(self.color, self)
+
+        if color:
+            self.set_color(color)
+
+    def set_color(self, color: QColor = Qt.black):
+
+        self.color = color
+        # Create color icon
+        pix_icon = QPixmap(32, 32)
+        pix_icon.fill(self.color)
+
+        self.color_action.setIcon(QIcon(pix_icon))
+        self.painter_widget.pen.setColor(self.color)
+        self.color_action.setText(QColor(self.color).name())
+
+class MyMainWindow(QMainWindow):
+    """New customized main window class"""
+
+    def __init__(self, parent=None):
+        QMainWindow.__init__(self, parent)
+
+        # Create and set up PainterWidget
+        self.painter_widget = PainterWidget()
+
+        # Create and set up the label
+        self.pushButton = QPushButton("hello")
+        self.pushButton.clicked.connect(self.hello)
+        self.label = QLabel("Right Panel")
+
+        # Create layout for the main window
+        main_layout = QHBoxLayout()
+        main_layout.addWidget(self.painter_widget)
+
+        # Create layout for the right panel
+        right_layout = QVBoxLayout()
+        right_layout.addWidget(self.pushButton)
+        right_layout.addWidget(self.label)
+
+        # Add the right panel layout to the main layout
+        main_layout.addLayout(right_layout)
+
+        # Create a central widget and set the layout
+        central_widget = QWidget()
+        central_widget.setLayout(main_layout)
+
+        # Set the central widget of the main window
+        self.setCentralWidget(central_widget)
     
-    # 完成一次预测
-    def predict(self, tensor):
-        with torch.no_grad():
-            output = self.network(tensor)
-            pred = output.argmax(dim=1, keepdim=True)
-            return pred
-    
-    def writeNumber(self):
-        self.label_2.setText('写数字')
-        self.label_2.setStyleSheet('color: red')
+    def hello(self):
+        self.label.setText("Hello World")
 
-        self.label = PainterLabel(self)
-        self.label.setGeometry(10, 10, 361, 361)
-        self.label.setStyleSheet("border: 2px solid red")
-        self.label.show()
-
-        self.label_2.setText('请在左边的画板上写一个数字')
-        self.label_2.setStyleSheet('color: blue')
-    
-    def recognize_handwrite(self):
-        if self.label.pixmap.isNull():
-            QMessageBox.information(self, '提示', '没有写数字')
-            return
-        self.image = self.label.pixmap.toImage()
-        self.image = self.qimage2tensor(self.image)
-        pred = self.predict(self.image)
-        self.label_2.setText('预测结果：' + str(pred.item()))
-        self.label_2.setStyleSheet('color: red')
-
-class PainterLabel(QLabel):
-    x0 = 0
-    y0 = 0
-    x1 = 0
-    y1 = 0
-    flag = False
-    def __init__(self, parent):
-        super(PainterLabel,self).__init__(parent)
-        print('初始化PainterLabel')
-        self.pixmap = QPixmap(361, 361)
-        self.pixmap.fill(Qt.black)
-        self.setStyleSheet("border: 2px solid red")
-        self.Color = Qt.white
-        self.penwidth = 15
-
-    def paintEvent(self, event):
-        painter = QPainter(self.pixmap)
-        painter.setPen(QPen(self.Color, self.penwidth, Qt.SolidLine))
-        painter.drawLine(self.x0, self.y0, self.x1, self.y1)
-
-        Label_painter = QPainter(self)
-        Label_painter.drawPixmap(2, 2, self.pixmap)
-    
-    def mousePressEvent(self, event):
-        self.x1 = event.x()       # deprecate
-        self.y1 = event.y()
-        self.flag = True
-    
-    def mouseMoveEvent(self, event):
-        if self.flag:
-            self.x0 = self.x1
-            self.y0 = self.y1
-            self.x1 = event.x()
-            self.y1 = event.y()
-            self.update()
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
-    mainWindow = MyMainWindow()
-    mainWindow.show()
+    w = MyMainWindow()
+    w.show()
     sys.exit(app.exec())
