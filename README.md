@@ -3,7 +3,7 @@ A real-time handwritten digits recognition by PyTorch &amp; PyQt.
 
 使用PyTorch和PyQt实现手写数字的实时识别。
 
-(Here will be placed a gif of this project.)
+(Here will be placed a GIF of this project.)
 
 # Abstract
 * Handwrite input and real-time indetification are reliazed.
@@ -21,6 +21,8 @@ This is my environment:
 `git clone https://github.com/CatPieee/PyDigits_RealTimeHandWriteRecog.git`
 
 `cd PyDigits_RealTimeHandWriteRecog`
+
+`python train.py`
 
 `python main.py`
 
