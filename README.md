@@ -1,13 +1,13 @@
 # PyDigits_RealTimeHandWriteRecog
-A real-time handwritten digits recognition by PyTorch &amp; PyQt.
+A real-time handwritten digits recognition by PyTorch &amp; PySide6.
 
-使用PyTorch和PyQt实现手写数字的实时识别。
+使用PyTorch和Qt实现手写数字的实时识别。
 
 (Here will be placed a GIF of this project.)
 
 # Abstract
 * Handwrite input and real-time indetification are reliazed.
-* GUI is designed by Qt Designer.
+* GUI is designed based on PySide6.
 * Construct a neural network. Specifically, it's a model with three convolution layers and fully connected layers, which built by PyTorch deep learning framework.
 
 # Environment Requirement
@@ -15,7 +15,8 @@ This is my environment:
 * Windows 10
 * Python 3.10
 * PyTorch 2.1.0, Torchvision xx.xx
-* PyQt xx.xx
+* PySide xx.xx
+* CUDA 12.0
 
 # Installation
 `git clone https://github.com/CatPieee/PyDigits_RealTimeHandWriteRecog.git`
